@@ -49,7 +49,7 @@ module HammerCLICsv
     def create_contentviews_from_csv(line)
       if !@existing_contentviews[line[ORGANIZATION]]
         @existing_contentviews[line[ORGANIZATION]] ||= {}
-        @api.resource(:contentviewdefinitions).call(:index, {'organization_id' => line[ORGANIZATION], 'page_size' => 999999, 'paged' => true})['results'].each do |contentview|
+        @api.resource(:content_views).call(:index, {'organization_id' => line[ORGANIZATION], 'page_size' => 999999, 'paged' => true})['results'].each do |contentview|
           @existing_contentviews[line[ORGANIZATION]][contentview['name']] = contentview['id'] if contentview
         end
       end
@@ -59,7 +59,7 @@ module HammerCLICsv
         contentview_id = @existing_contentviews[line[ORGANIZATION]][name]
         if !contentview_id
           print "Creating content view '#{name}'..." if option_verbose?
-          contentview_id = @api.resource(:contentviewdefinitions).call(:create, {
+          contentview_id = @api.resource(:content_views).call(:create, {
                                                                  'organization_id' => line[ORGANIZATION],
                                                                  'name' => name,
                                                                  'label' => labelize(name),
@@ -69,13 +69,22 @@ module HammerCLICsv
           @existing_contentviews[line[ORGANIZATION]][name] = contentview_id
         else
           print "Updating content view '#{name}'..." if option_verbose?
-          @api.resource(:contentviewdefinitions).call(:create, {
-                                                'description' => line[DESCRIPTION],
-                                              })
+          @api.resource(:content_views).call(:update, {
+                                               'id' => contentview_id,
+                                               'description' => line[DESCRIPTION],
+                                             })
         end
 
+        contentview = @api.resource(:content_views).call(:show, {'id' => contentview_id})
         if line[REPOSITORY]
-          puts "UPDATING REPOSITORY"
+          repository_id = katello_repository(line[ORGANIZATION], :name => line[REPOSITORY])
+          if !contentview['repository_ids'].include? repository_id
+            contentview['repository_ids'] << repository_id
+            @api.resource(:content_views).call(:update, {
+                                                 'id' => contentview_id,
+                                                 'repository_ids' => contentview['repository_ids']
+                                               })
+          end
         elsif line[PRODUCT]
           puts "UPDATING PRODUCT"
         end
