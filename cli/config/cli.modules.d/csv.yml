@@ -1,0 +1,6 @@
+:csv:
+  :enable_module: true
+  :host:          'http://katello:3000'
+  :username:      'admin'
+  :password:      'changeme'
+  :products_sync: false

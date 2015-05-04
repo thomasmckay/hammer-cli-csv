@@ -1,0 +1,27 @@
+:ui:
+  :interactive: true
+  :per_page: 20
+  :history_file: './log/history'
+
+:watch_plain: true # enable/disable color output of logger in Clamp commands
+
+:log_dir: './log'
+:log_level: 'error'
+:log_api_calls: false
+:log_size: 5 # MB
+
+:foreman:
+  :enable_module: true
+  :host:          'http://192.168.121.33:3000'
+  :username:      'admin'
+  :password:      'changeme'
+
+:katello:
+  :enable_module: true
+
+
+:csv:
+  :enable_module: true
+  :host:          'http://192.168.121.33:3000'
+  :username:      'admin'
+  :password:      'changeme'

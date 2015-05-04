@@ -1,0 +1,3 @@
+Name,Count,Organization,Environment,Content View,Host Collections,Virtual,Host,OS,Arch,Sockets,RAM,Cores,SLA,Products,Subscriptions
+vm2.megacorp.com,1,MegaCorp,Library,Default Organization View,,Yes,,Red Hat Enterprise Linux Server 6.6,x86_64,1,1922484,1,"",69|Red Hat Enterprise Linux Server,"""1|RH0103708|Red Hat Enterprise Linux Server, Premium (8 sockets) (Up to 4 guests)"""
+vm7-local,1,MegaCorp,Library,Default Organization View,,Yes,,Red Hat Enterprise Linux Server 6.6,x86_64,1,1922484,1,"",69|Red Hat Enterprise Linux Server,"""1|RH0103708|Red Hat Enterprise Linux Server, Premium (8 sockets) (Up to 4 guests)"""

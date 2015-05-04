@@ -1,0 +1,2 @@
+Name,Count,Organization,Description,Limit,Environment,Content View,System Groups,Subscriptions
+migration,1,MegaCorp,"",Unlimited,Library,Default Organization View,,"""Automatic|RH0103708|Red Hat Enterprise Linux Server, Premium (8 sockets) (Up to 4 guests)"""
