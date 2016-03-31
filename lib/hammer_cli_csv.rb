@@ -36,6 +36,7 @@ module HammerCLICsv
   require 'hammer_cli_csv/puppet_reports'
   require 'hammer_cli_csv/reports'
   require 'hammer_cli_csv/roles'
+  require 'hammer_cli_csv/satellite5'
   require 'hammer_cli_csv/settings'
   require 'hammer_cli_csv/smart_proxies'
   require 'hammer_cli_csv/splice'
