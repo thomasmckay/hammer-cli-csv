@@ -42,28 +42,6 @@ module HammerCLICsv
         process_repositories
       end
 
-      NAME = 'Name'
-
-      # users.rb
-      FIRSTNAME = 'First Name'
-      LASTNAME = 'Last Name'
-      EMAIL = 'Email'
-      ORGANIZATIONS = 'Organizations'
-      LOCATIONS = 'Locations'
-      ADMIN = 'Administrator'
-      ROLES = 'Roles'
-
-      # organizations.rb
-      LABEL = 'Label'
-      DESCRIPTION = 'Description'
-
-      # roles.rb
-      RESOURCE = 'Resource'
-      SEARCH = 'Search'
-      PERMISSIONS = 'Permissions'
-      #ORGANIZATIONS = 'Organizations'
-      #LOCATIONS = 'Locations'
-
       # TODO: copied from base.rb
       def labelize(name)
         name.gsub(/[^a-z0-9\-_]/i, '_')
@@ -75,13 +53,14 @@ module HammerCLICsv
           yield value
         end
       end
+      # TODO: end
 
       def process_users
         input_file = "#{option_input_dir}/users.csv"
         output_users_file = "#{option_output_dir}/users.csv"
         output_organizations_file = "#{option_output_dir}/organizations.csv"
         output_roles_file = "#{option_output_dir}/roles.csv"
-        raise "File '%{input_file}' does not exist" % (input_file) unless File.exist? input_file
+        raise _("File '%{input_file}' does not exist") % {input_file => input_file} unless File.exist? input_file
 
         @existing_organizations = {}
         @existing_roles = {}
@@ -94,13 +73,18 @@ module HammerCLICsv
           CSV.open(output_users_file, 'wb', {:force_quotes => true}) do |csv_users|
             CSV.open(output_organizations_file, 'wb', {:force_quotes => true}) do |csv_organizations|
               CSV.open(output_roles_file, 'wb', {:force_quotes => true}) do |csv_roles|
-                csv_users << [NAME, FIRSTNAME, LASTNAME, EMAIL, ORGANIZATIONS, LOCATIONS, ADMIN, ROLES]
-                csv_organizations << [NAME, LABEL, DESCRIPTION]
-                csv_roles << [NAME, RESOURCE, SEARCH, PERMISSIONS, ORGANIZATIONS, LOCATIONS]
+                csv_users << [UsersCommand::NAME, UsersCommand::FIRSTNAME, UsersCommand::LASTNAME,
+                              UsersCommand::EMAIL, UsersCommand::ORGANIZATIONS,
+                              UsersCommand::LOCATIONS, UsersCommand::ADMIN, UsersCommand::ROLES]
+                csv_organizations << [OrganizationsCommand::NAME, OrganizationsCommand::LABEL,
+                                      OrganizationsCommand::DESCRIPTION]
+                csv_roles << [RolesCommand::NAME, RolesCommand::RESOURCE, RolesCommand::SEARCH,
+                              RolesCommand::PERMISSIONS, RolesCommand::ORGANIZATIONS,
+                              RolesCommand::LOCATIONS]
 
                 unless @existing_organizations[line['organization_id']]
                   @existing_organizations[line['organization_id']] = line['organization']
-                  csv_organizations << [line['organization'], labelize(line['organization'])]
+                  csv_organizations << [line['organization'], labelize(line['organization']), '']
                 end
 
                 roles = []
@@ -126,30 +110,50 @@ module HammerCLICsv
         end
       end
 
-      #LABEL = 'Label'
-      #ORGANIZATION = 'Organization'
-      REPOSITORY = 'Repository'
-      REPOSITORY_TYPE = 'Repository Type'
-      REPOSITORY_URL = 'Repository Url'
-      #DESCRIPTION = 'Description'
-
       def process_repositories
 
-        input_file = "#{option_input_dir}/repositories.csv"
+        input_repositories_file = "#{option_input_dir}/repositories.csv"
         output_products_file = "#{option_output_dir}/products.csv"
-        raise "File '%{input_file}' does not exist" % (input_file) unless File.exist? input_file
+        raise _("File '%{input_file}' does not exist") % {input_file => input_repositories_file} unless File.exist? input_repositories_file
+        input_channels_file = "#{option_input_dir}/channels.csv"
+        raise _("File '%{input_file}' does not exist") % {input_file => input_channels_file} unless File.exist? input_channels_file
 
-        @existing_organizations = {}
-        @existing_roles = {}
-
-        CSV.open(input_file, {
-                   :skip_blanks => true,
-                   :headers => :first_row,
-                   :return_headers => false
-                 }).each do |line|
-          CSV.open(output_products_file, 'wb', {:force_quotes => true}) do |csv_products|
-            csv_products << [NAME, LABEL, ORGANIZATION, DESCRIPTION, REPOSITORY, REPOSITORY_TYPE,
-                             REPOSITORY_URL]
+        CSV.open(output_products_file, 'wb', {:force_quotes => true}) do |csv_products|
+          csv_products << [ProductsCommand::NAME, ProductsCommand::LABEL,
+                           ProductsCommand::ORGANIZATION, ProductsCommand::DESCRIPTION,
+                           ProductsCommand::REPOSITORY, ProductsCommand::REPOSITORY_TYPE,
+                           ProductsCommand::REPOSITORY_URL]
+          CSV.open(input_repositories_file, {
+                     :skip_blanks => true,
+                     :headers => :first_row,
+                     :return_headers => false
+                   }).each do |line|
+            name = line['repo_label']
+            label = labelize(line['repo_label'])
+            organization = @existing_organizations[line['org_id']]
+            description = ''
+            repository = name
+            repository_url = line['source_url']
+            repository_type = 'Custom Yum'  # TODO: line['repo_type']
+            # TODO: client_key_descr,client_key_type,client_key,client_cert_descr,client_cert_type,client_cert,ca_descr,ca_type,ca_key
+            csv_products << [name, label, organization, description, repository,
+                             repository_type, repository_url]
+          end
+          CSV.open(input_channels_file, {
+                     :skip_blanks => true,
+                     :headers => :first_row,
+                     :return_headers => false
+                   }).each do |line|
+            name = line['channel_name']
+            label = labelize(line['channel_label'])
+            organization = @existing_organizations[line['org_id']]
+            description = ''
+            repository = name
+            repository_url = "file://#{option_input_dir}/CHANNELS/#{line['org_id']}/#{line['channel_id']}"
+            repository_type = 'Custom Yum'  # TODO: line['repo_type']
+            # TODO: client_key_descr,client_key_type,client_key,client_cert_descr,client_cert_type,client_cert,ca_descr,ca_type,ca_key
+            csv_products << [name, label, organization, description, repository,
+                             repository_type, repository_url]
           end
         end
       end
