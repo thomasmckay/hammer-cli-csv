@@ -10,13 +10,15 @@ module HammerCLICsv
       REPOSITORY = 'Repository'
       REPOSITORY_TYPE = 'Repository Type'
       CONTENT_SET = 'Content Set'
+      ARCHITECTURE = 'Arch'
       RELEASE = 'Release'
       REPOSITORY_URL = 'Repository Url'
       DESCRIPTION = 'Description'
+      DOWNLOAD = 'Download Policy'
 
       def export(csv)
         csv << [NAME, LABEL, ORGANIZATION, DESCRIPTION, REPOSITORY, REPOSITORY_TYPE,
-                CONTENT_SET, RELEASE, REPOSITORY_URL]
+                CONTENT_SET, ARCHITECTURE, RELEASE, DOWNLOAD, REPOSITORY_URL]
         # TODO: DOWNLOAD_POLICY
         @api.resource(:organizations).call(:index, {
             :per_page => 999999
@@ -40,9 +42,10 @@ module HammerCLICsv
                 content_set = get_content_set(organization, product, repository)
               end
               release = repository['minor'] #=~ /Server/ ? repository['minor'] : "#{repository['major']}.#{repository['minor']}"
+              arch = parse_basearch(repository['name'])
               csv << [product['name'], product['label'], organization['name'],
                       product['description'], repository['name'], repository_type,
-                      content_set, release, repository['url']]
+                      content_set, arch, release, repository['download_policy'], repository['url']]
             end
           end
         end
@@ -203,13 +206,12 @@ module HammerCLICsv
           end
           raise "No match for content set '#{line[CONTENT_SET]}'" if !product_content
 
-          basearch,releasever = parse_basearch_releasever(line[REPOSITORY])
           params = {
               'id' => product_content['content']['id'],
-              'product_id' => product['id'],
-              'basearch' => basearch,
-              'releasever' => releasever
+              'product_id' => product['id']
           }
+          params['basearch'] = line[ARCHITECTURE] if !line[ARCHITECTURE].nil? && !line[ARCHITECTURE].empty?
+          params['releasever'] = line[RELEASE] if !line[RELEASE].nil? && !line[RELEASE].empty?
           @api.resource(:repository_sets).call(:enable, params)
           puts _('done') if option_verbose?
         else
@@ -219,13 +221,15 @@ module HammerCLICsv
       end
 
       # basearch and releasever are required for repo set enable. The repository ends with, for example,
-      # "x86_64 6.1" or "ia64 6 Server"
-      def parse_basearch_releasever(content_set)
-        pieces = content_set.split
+      # "x86_64 6.1" or "ia64 6 Server" or "3.2 RPMs x86_64"
+      def parse_basearch(name)
+        pieces = name.split
         if pieces[-1] == 'Server'
-          return pieces[-3], "#{pieces[-2]}#{pieces[-1]}"
+          return pieces[-3]
+        elsif pieces[-2] == 'RPMs'
+            return pieces[-1]
         else
-          return pieces[-2], pieces[-1]
+          return pieces[-2]
         end
       end
 
