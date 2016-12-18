@@ -39,6 +39,8 @@ module HammerCLICsv
                 rules = export_erratum_rules(filter)
               when /package_group/
                 rules = export_package_group_rules(filter)
+              when /docker/
+                rules = export_docker_rules(filter)
               else
                 raise "Unknown filter rule type '#{filter['type']}'"
               end
@@ -227,6 +229,17 @@ module HammerCLICsv
         end
         rules.delete!("\n")
       end
+
+      def export_docker_rules(filter)
+        export_column(filter, 'rules', 'name')
+      #   rules = CSV.generate do |column|
+      #     column << filter['rules'].collect do |rule|
+      #       rule['name']
+      #     end
+      #   end
+      #   rules.delete!("\n")
+      end
+
     end
   end
 end
