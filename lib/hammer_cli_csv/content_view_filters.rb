@@ -238,12 +238,6 @@ module HammerCLICsv
         export_column(filter, 'rules') do |rule|
           "#{rule['name']}|all"
         end
-      #   rules = CSV.generate do |column|
-      #     column << filter['rules'].collect do |rule|
-      #       rule['name']
-      #     end
-      #   end
-      #   rules.delete!("\n")
       end
 
     end
