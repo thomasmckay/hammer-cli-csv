@@ -165,6 +165,8 @@ module HammerCLICsv
           'rpm'
         when /package groups/i
           'package_group'
+        when /docker/i
+          'docker'
         else
           'unknown'
         end
@@ -176,6 +178,8 @@ module HammerCLICsv
           'Packages'
         when /package_group/i
           'Package Groups'
+        when /docker/i
+          'Docker'
         else
           'unknown'
         end
@@ -231,7 +235,9 @@ module HammerCLICsv
       end
 
       def export_docker_rules(filter)
-        export_column(filter, 'rules', 'name')
+        export_column(filter, 'rules') do |rule|
+          "#{rule['name']}|all"
+        end
       #   rules = CSV.generate do |column|
       #     column << filter['rules'].collect do |rule|
       #       rule['name']
