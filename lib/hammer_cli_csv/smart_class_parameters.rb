@@ -7,15 +7,31 @@ module HammerCLICsv
       option %w(--columns), 'COLUMN_NAMES', _('Comma separated list of column names to export')
 
       SEARCH = 'Search'
-      ENVIRONMENTS = 'Environments'
-      HOSTGROUPS = 'Host Groups'
+      DESCRIPTION = 'Description'
+      PUPPET_CLASS = 'Class'
+      PARAMETER_TYPE = 'Parameter Type'
+      DEFAULT_VALUE = 'Default Value'
+      HIDDEN_VALUE = 'Hidden Value'
+      USE_PUPPET_DEFAULT = 'Use Puppet Default'
+      REQUIRED = 'Required'
+      VALIDATOR_TYPE = 'Validator Type'
+      VALIDATOR_RULE = 'Validator Rule'
+      MERGE_OVERRIDES = 'Merge Overrides'
+      MERGE_DEFAULT = 'Merge Default'
+      AVOID_DUPLICATES = 'Avoid Duplicates'
+      OVERRIDE = 'Override'
+      OVERRIDE_VALUE_ORDER = 'Override Order'
+      OVERRIDE_MATCH = 'Override Match'
+      OVERRIDE_VALUE = 'Override Value'
+      OVERRIDE_OMIT = 'Override Omit'
+      OVERRIDE_USE_DEFAULT = 'Override Use Default'
 
       def self.help_columns
         ['', _('Columns:'),
          _(" %{name} - Name of resource") % {:name => NAME},
          _(" %{name} - Search for matching names during import (overrides '%{name_col}' column)") % {:name => SEARCH, :name_col => NAME},
-         _(" %{name} - Puppet environments") % {:name => ENVIRONMENTS},
-         _(" %{name} - Host groups") % {:name => HOSTGROUPS}
+         #_(" %{name} - Puppet environments") % {:name => ENVIRONMENTS},
+         #_(" %{name} - Host groups") % {:name => HOSTGROUPS}
         ].join("\n")
       end
 
@@ -27,7 +43,10 @@ module HammerCLICsv
               ::HammerCLI::Settings.settings[:csv][:columns]['smart-class-parameters'.to_sym][:export]
             @columns = ::HammerCLI::Settings.settings[:csv][:columns]['smart-class-parameters'.to_sym][:export]
           else
-            @columns = [NAME, ENVIRONMENTS, HOSTGROUPS]
+            @columns = [NAME, DESCRIPTION, PUPPET_CLASS, PARAMETER_TYPE, DEFAULT_VALUE, HIDDEN_VALUE,
+                        USE_PUPPET_DEFAULT, REQUIRED, VALIDATOR_TYPE, VALIDATOR_RULE, MERGE_OVERRIDES,
+                        MERGE_DEFAULT, AVOID_DUPLICATES, OVERRIDE, OVERRIDE_VALUE_ORDER,
+                        OVERRIDE_MATCH, OVERRIDE_VALUE, OVERRIDE_OMIT, OVERRIDE_USE_DEFAULT]
           end
         else
           @columns = option_columns.split(',')
@@ -42,11 +61,17 @@ module HammerCLICsv
       end
 
       def export(csv)
+        blank_override_columns = {
+          OVERRIDE_MATCH => nil,
+          OVERRIDE_VALUE => nil,
+          OVERRIDE_OMIT => nil,
+          OVERRIDE_USE_DEFAULT => nil
+        }
         csv << column_headers
         iterate_smart_class_parameters(csv) do |smart_class_parameter|
           predefined_columns(smart_class_parameter)
           custom_columns(smart_class_parameter)
-          columns_to_csv(csv)
+          columns_to_csv(csv, blank_override_columns)
         end
       end
 
@@ -66,9 +91,11 @@ module HammerCLICsv
                 'per_page' => 20,
                 'search' => option_search
             })['results'].each do |smart_class_parameter|
-              smart_class_parameter = @api.resource(:smart_class_parameters).call(:show, {
-                  'id' => smart_class_parameter[1][0]['id']
-              })
+              if smart_class_parameter['override_values_count'] > 0
+                smart_class_parameter = @api.resource(:smart_class_parameters).call(:show, {
+                    'id' => smart_class_parameter['id']
+                })
+              end
               yield smart_class_parameter
             end
           end
@@ -76,9 +103,11 @@ module HammerCLICsv
       end
 
       def predefined_columns(smart_class_parameter)
-        @column_values[NAME] = smart_class_parameter['name']
-        @column_values[ENVIRONMENTS] = export_column(smart_class_parameter, 'environments', 'name')
-        @column_values[HOSTGROUPS] = export_column(smart_class_parameter, 'hostgroups', 'name')
+        @column_values[NAME] = smart_class_parameter['parameter']
+        @column_values[DESCRIPTION] = smart_class_parameter['description']
+        @column_values[PUPPET_CLASS] = smart_class_parameter['puppet_class']
+        @column_values[OVERRIDE] = smart_class_parameter['override'] ? 'Yes' : 'No'
+        @column_values[OVERRIDE_VALUE_ORDER] = smart_class_parameter['override_value_order'].split("\n").join(",")
       end
 
       def custom_columns(smart_class_parameter)
@@ -94,7 +123,7 @@ module HammerCLICsv
         end
       end
 
-      def columns_to_csv(csv)
+      def columns_to_csv(csv, column_value_overrides)
         if @first_columns_to_csv.nil?
           @columns.each do |column|
             # rubocop:disable LineLength
@@ -106,7 +135,7 @@ module HammerCLICsv
           @first_columns_to_csv = true
         end
         csv << @columns.collect do |column|
-          @column_values[column]
+          column_value_overrides.key?(column) ? column_value_overrides[column] : @column_values[column]
         end
       end
     end
