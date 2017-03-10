@@ -133,9 +133,23 @@ module HammerCLICsv
       def predefined_columns(smart_class_parameter)
         @column_values[NAME] = smart_class_parameter['parameter']
         @column_values[DESCRIPTION] = smart_class_parameter['description']
-        @column_values[PUPPET_CLASS] = smart_class_parameter['puppet_class']
+        @column_values[PUPPET_CLASS] = smart_class_parameter['puppetclass_name']
+        @column_values[PARAMETER_TYPE] = smart_class_parameter['parameter_type']
+        @column_values[DEFAULT_VALUE] = smart_class_parameter['default_value']
+        @column_values[HIDDEN_VALUE] = smart_class_parameter['hidden_value']
+        @column_values[USE_PUPPET_DEFAULT] = smart_class_parameter['use_puppet_default']
+        @column_values[REQUIRED] = smart_class_parameter['required']
+        @column_values[VALIDATOR_TYPE] = smart_class_parameter['validator_type']
+        @column_values[VALIDATOR_RULE] = smart_class_parameter['validator_rule']
+        @column_values[MERGE_OVERRIDES] = smart_class_parameter['merge_overrides']
+        @column_values[MERGE_DEFAULT] = smart_class_parameter['merge_default']
+        @column_values[AVOID_DUPLICATES] = smart_class_parameter['avoid_duplicates']
         @column_values[OVERRIDE] = smart_class_parameter['override'] ? 'Yes' : 'No'
         @column_values[OVERRIDE_VALUE_ORDER] = smart_class_parameter['override_value_order'].split("\n").join(",")
+        @column_values[OVERRIDE_MATCH] = nil
+        @column_values[OVERRIDE_VALUE] = nil
+        @column_values[OVERRIDE_OMIT] = nil
+        @column_values[OVERRIDE_USE_DEFAULT] = nil
       end
 
       def custom_columns(smart_class_parameter)
