@@ -61,17 +61,45 @@ module HammerCLICsv
       end
 
       def export(csv)
-        blank_override_columns = {
+        preset_override_columns = {
           OVERRIDE_MATCH => nil,
           OVERRIDE_VALUE => nil,
           OVERRIDE_OMIT => nil,
           OVERRIDE_USE_DEFAULT => nil
         }
+        preset_primary_columns = {
+          DESCRIPTION => nil,
+          PUPPET_CLASS => nil,
+          PARAMETER_TYPE => nil,
+          DEFAULT_VALUE => nil,
+          HIDDEN_VALUE => nil,
+          USE_PUPPET_DEFAULT => nil,
+          REQUIRED => nil,
+          VALIDATOR_TYPE => nil,
+          VALIDATOR_RULE => nil,
+          MERGE_OVERRIDES => nil,
+          MERGE_DEFAULT => nil,
+          AVOID_DUPLICATES => nil,
+          OVERRIDE_VALUE_ORDER => nil
+        }
         csv << column_headers
         iterate_smart_class_parameters(csv) do |smart_class_parameter|
           predefined_columns(smart_class_parameter)
           custom_columns(smart_class_parameter)
-          columns_to_csv(csv, blank_override_columns)
+          columns_to_csv(csv, preset_override_columns)
+
+          if smart_class_parameter['override'] == true && smart_class_parameter['override_values_count'] > 0
+            preset_primary_columns[OVERRIDE] = 'Remove All'
+            columns_to_csv(csv, preset_primary_columns)
+            preset_primary_columns[OVERRIDE] = 'Override'
+            smart_class_parameter['override_values'].each do |override|
+              @column_values[OVERRIDE_MATCH] = override['match']
+              @column_values[OVERRIDE_VALUE] = override['value']
+              @column_values[OVERRIDE_OMIT] = override['omit'] ? 'Yes' : 'No'
+              @column_values[OVERRIDE_USE_DEFAULT] = override['use_puppet_default'] ? 'Yes' : 'No'
+              columns_to_csv(csv, preset_primary_columns)
+            end
+          end
         end
       end
 
